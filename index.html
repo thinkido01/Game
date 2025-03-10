@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enemy Click Blast</title>
+    <style>
+        body { background-color: black; overflow: hidden; margin: 0; }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: none; }
+        .enemy { position: absolute; width: 80px; height: 80px; background: red; border-radius: 50%; cursor: pointer; }
+        #score { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: white; font-size: 24px; }
+        #hearts { position: absolute; top: 10px; left: 10px; color: white; font-size: 24px; display: flex; }
+        .heart { width: 30px; height: 30px; margin-right: 5px; }
+        #start-screen, #game-over { position: absolute; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-size: 24px; }
+        #start-box, #game-over-box { background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3); }
+        #start-button, #restart-button { padding: 15px 30px; font-size: 20px; background: green; color: white; border: none; cursor: pointer; margin-top: 20px; border-radius: 5px; }
+        #divider { position: absolute; top: 60px; width: 100vw; height: 5px; background: white; }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <div id="start-box">
+            <div>Welcome to Enemy Click Blast!</div>
+            <button id="start-button" onclick="startGame()">Play Game</button>
+        </div>
+    </div>
+    
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="hearts">
+            <img src="heart.png" class="heart">
+            <img src="heart.png" class="heart">
+            <img src="heart.png" class="heart">
+        </div>
+        <div id="divider"></div>
+    </div>
+    
+    <div id="game-over" style="display: none;">
+        <div id="game-over-box">
+            <div>Game Over</div>
+            <button id="restart-button" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+    
+    <audio id="blast-sound" src="blast.mp3"></audio>
+    
+    <script>
+        let score = 0;
+        let lives = 3;
+        let enemyInterval;
+        let enemySpeed = 5; // Initial enemy speed
+        
+        function updateScore() {
+            document.getElementById("score").innerText = "Score: " + score;
+        }
+        
+        function startGame() {
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-over").style.display = "none";
+            document.getElementById("game-container").style.display = "block";
+            resetGame();
+            enemyInterval = setInterval(spawnEnemy, 2000);
+            setInterval(increaseDifficulty, 10000); // Increase speed every 10 seconds
+        }
+        
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            enemySpeed = 5; // Reset speed
+            updateScore();
+            document.getElementById("hearts").innerHTML = '<img src="heart.png" class="heart"><img src="heart.png" class="heart"><img src="heart.png" class="heart">';
+            document.querySelectorAll(".enemy").forEach(enemy => enemy.remove());
+        }
+        
+        function spawnEnemy() {
+            let enemy = document.createElement("div");
+            enemy.className = "enemy";
+            enemy.style.left = Math.random() * (window.innerWidth - 80) + "px";
+            enemy.style.top = "70px"; // Start below the white line
+            document.getElementById("game-container").appendChild(enemy);
+            
+            let enemyInterval = setInterval(() => {
+                if (!document.body.contains(enemy)) {
+                    clearInterval(enemyInterval);
+                    return;
+                }
+                let enemyPos = parseInt(enemy.style.top);
+                if (enemyPos < window.innerHeight - 80) {
+                    enemy.style.top = (enemyPos + enemySpeed) + "px";
+                } else {
+                    enemy.remove();
+                    clearInterval(enemyInterval);
+                    loseLife();
+                }
+            }, 30);
+            
+            enemy.addEventListener("click", () => {
+                document.getElementById("blast-sound").play();
+                setTimeout(() => enemy.remove(), 200);
+                score++;
+                updateScore();
+            });
+        }
+        
+        function loseLife() {
+            if (lives > 0) {
+                lives--;
+                document.getElementById("hearts").removeChild(document.getElementById("hearts").lastElementChild);
+            }
+            if (lives === 0) {
+                gameOver();
+            }
+        }
+        
+        function gameOver() {
+            clearInterval(enemyInterval);
+            document.getElementById("game-container").style.display = "none";
+            document.getElementById("game-over").style.display = "flex";
+        }
+        
+        function restartGame() {
+            document.getElementById("game-over").style.display = "none";
+            startGame();
+        }
+        
+        function increaseDifficulty() {
+            enemySpeed += 1; // Increase enemy speed over time
+        }
+    </script>
+</body>
+</html>
